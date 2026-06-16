@@ -119,6 +119,93 @@ function showScreen(name) {
         // Scroll to top
         window.scrollTo(0, 0);
     }
+    // Refresh resume card when showing home
+    if (name === 'home') {
+        renderResumeCard();
+    }
+}
+
+// ===========================================
+// SESSION SAVE / RESUME
+// ===========================================
+function saveSession() {
+    if (!appState.questions.length || appState.userAnswers.length === 0) return;
+    userData.savedSession = {
+        questionType: appState.questionType,
+        mode: appState.mode,
+        source: appState.source,
+        questionIds: appState.questions.map(q => q.id),
+        currentIndex: appState.currentIndex,
+        userAnswers: appState.userAnswers,
+        score: appState.score,
+        savedAt: new Date().toISOString()
+    };
+    saveAll();
+}
+
+function clearSavedSession() {
+    delete userData.savedSession;
+    saveAll();
+    renderResumeCard();
+}
+
+function resumeSession() {
+    const s = userData.savedSession;
+    if (!s || !s.questionIds.length) return;
+
+    // Rebuild questions array from IDs
+    const allQuestions = getQuestionsByType(s.questionType);
+    const questionMap = {};
+    allQuestions.forEach(q => { questionMap[q.id] = q; });
+
+    const questions = s.questionIds.map(id => questionMap[id]).filter(Boolean);
+    if (questions.length === 0) {
+        clearSavedSession();
+        return;
+    }
+
+    appState.questionType = s.questionType;
+    appState.mode = s.mode;
+    appState.source = s.source;
+    appState.questions = questions;
+    appState.currentIndex = s.currentIndex;
+    appState.userAnswers = s.userAnswers;
+    appState.score = s.score;
+    appState.sessionDone = false;
+
+    showScreen('exercise');
+    renderQuestion();
+}
+
+function renderResumeCard() {
+    const container = document.getElementById('resume-card-container');
+    if (!container) return;
+    const s = userData.savedSession;
+    if (!s || !s.questionIds || s.questionIds.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    const total = s.questionIds.length;
+    const current = s.currentIndex + 1;
+    const typeLabel = TYPE_LABEL[s.questionType] || '题目';
+    const modeLabel = s.mode === 'random' ? '随机' : '顺序';
+
+    container.innerHTML = `
+        <div class="resume-card" id="resume-card">
+            <div class="resume-info">
+                <span class="resume-icon">📌</span>
+                <div>
+                    <div class="resume-title">继续上次训练</div>
+                    <div class="resume-detail">${typeLabel} · ${modeLabel} · 第 ${current}/${total} 题</div>
+                </div>
+            </div>
+            <button class="btn btn-primary btn-resume" id="btn-resume">继续</button>
+            <button class="btn btn-resume-close" id="btn-resume-close">✕</button>
+        </div>
+    `;
+
+    document.getElementById('btn-resume').addEventListener('click', resumeSession);
+    document.getElementById('btn-resume-close').addEventListener('click', clearSavedSession);
 }
 
 // ===========================================
@@ -202,6 +289,9 @@ function updateProgressBars() {
 // START EXERCISE
 // ===========================================
 function startExercise(type, mode, source) {
+    // Clear any previously saved session when starting fresh
+    clearSavedSession();
+
     appState.questionType = type;
     appState.mode = mode;
     appState.source = source;
@@ -522,6 +612,9 @@ function nextQuestion() {
 }
 
 function finishSession() {
+    // Clear saved session since training is complete
+    clearSavedSession();
+
     // Add to history
     const total = appState.questions.length;
     const correct = appState.score;
@@ -818,11 +911,10 @@ function initExerciseButtons() {
 
     // Back button during exercise
     document.getElementById('btn-back').addEventListener('click', () => {
-        // Count answered questions before leaving
         const answered = appState.userAnswers.length;
         if (answered > 0 && !appState.sessionDone) {
-            if (confirm(`你已经回答了 ${answered} 道题，确定要退出吗？\n错题已自动保存。`)) {
-                // Save any answered questions to progress
+            if (confirm(`你已经回答了 ${answered} 道题，确定要退出吗？\n进度已保存，下次可以继续。`)) {
+                saveSession();
                 saveAll();
                 showScreen('home');
                 updateBadges();
