@@ -129,11 +129,16 @@ function showScreen(name) {
 // SESSION SAVE / RESUME
 // ===========================================
 function saveSession() {
-    if (!appState.questions.length || appState.userAnswers.length === 0) return;
-    // Always use number of answers as the next index to resume from
-    // This ensures we never re-answer a question that was already submitted
+    // Must have questions loaded and at least one answer submitted
+    if (!appState.questions || !appState.questions.length) return;
+    if (!appState.userAnswers || appState.userAnswers.length === 0) return;
+
     const idx = appState.userAnswers.length;
-    if (idx >= appState.questions.length) return; // All questions answered
+    if (idx >= appState.questions.length) {
+        // All done — clear saved session since nothing left to resume
+        clearSavedSession();
+        return;
+    }
 
     userData.savedSession = {
         questionType: appState.questionType,
@@ -146,6 +151,14 @@ function saveSession() {
         savedAt: new Date().toISOString()
     };
     saveAll();
+
+    // Flash save indicator
+    const indicator = document.getElementById('save-indicator');
+    if (indicator) {
+        indicator.style.display = '';
+        indicator.style.opacity = '1';
+        setTimeout(() => { indicator.style.opacity = '0'; }, 1500);
+    }
 }
 
 function clearSavedSession() {
