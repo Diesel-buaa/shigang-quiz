@@ -303,8 +303,15 @@ function renderQuestion() {
 
     // Reset feedback
     document.getElementById('answer-feedback').style.display = 'none';
-    document.getElementById('btn-submit').style.display = '';
     document.getElementById('btn-next').style.display = 'none';
+
+    // Auto-submit for single choice and true/false; show submit button only for multiple
+    if (appState.questionType === 'multiple') {
+        document.getElementById('btn-submit').style.display = '';
+        document.getElementById('btn-submit').textContent = '确认提交';
+    } else {
+        document.getElementById('btn-submit').style.display = 'none';
+    }
 
     // Add click handlers based on question type
     if (appState.questionType === 'truefalse') {
@@ -313,6 +320,8 @@ function renderQuestion() {
                 if (appState.sessionDone) return;
                 optionsContainer.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('selected'));
                 this.classList.add('selected');
+                // Auto-submit on click
+                submitAnswer();
             });
         });
     } else if (appState.questionType === 'single') {
@@ -321,6 +330,8 @@ function renderQuestion() {
                 if (this.classList.contains('submitted')) return;
                 optionsContainer.querySelectorAll('.option-item').forEach(i => i.classList.remove('selected'));
                 this.classList.add('selected');
+                // Auto-submit on click
+                submitAnswer();
             });
         });
     } else { // multiple
