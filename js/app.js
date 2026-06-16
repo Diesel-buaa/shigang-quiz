@@ -129,19 +129,21 @@ function showScreen(name) {
 // SESSION SAVE / RESUME
 // ===========================================
 function saveSession() {
-    // Must have questions loaded and at least one answer submitted
     if (!appState.questions || !appState.questions.length) return;
     if (!appState.userAnswers || appState.userAnswers.length === 0) return;
 
+    const type = appState.questionType;
     const idx = appState.userAnswers.length;
     if (idx >= appState.questions.length) {
-        // All done — clear saved session since nothing left to resume
-        clearSavedSession();
+        // All done for this type — clear this type's saved session
+        clearSavedSession(type);
         return;
     }
 
-    userData.savedSession = {
-        questionType: appState.questionType,
+    // Each question type has its own independent save slot
+    if (!userData.savedSession) userData.savedSession = {};
+    userData.savedSession[type] = {
+        questionType: type,
         mode: appState.mode,
         source: appState.source,
         questionIds: appState.questions.map(q => q.id),
@@ -161,14 +163,25 @@ function saveSession() {
     }
 }
 
-function clearSavedSession() {
-    delete userData.savedSession;
+function clearSavedSession(type) {
+    if (type) {
+        // Clear specific type
+        if (userData.savedSession) {
+            delete userData.savedSession[type];
+            if (Object.keys(userData.savedSession).length === 0) {
+                delete userData.savedSession;
+            }
+        }
+    } else {
+        // Clear all
+        delete userData.savedSession;
+    }
     saveAll();
     renderResumeCard();
 }
 
-function resumeSession() {
-    const s = userData.savedSession;
+function resumeSession(type) {
+    const s = userData.savedSession && userData.savedSession[type];
     if (!s || !s.questionIds || !s.questionIds.length) return;
 
     // Rebuild questions array from IDs
@@ -178,7 +191,7 @@ function resumeSession() {
 
     const questions = s.questionIds.map(id => questionMap[id]).filter(Boolean);
     if (questions.length === 0) {
-        clearSavedSession();
+        clearSavedSession(type);
         return;
     }
 
@@ -190,7 +203,7 @@ function resumeSession() {
         appState.questions = questions;
         appState.userAnswers = s.userAnswers;
         appState.score = s.score;
-        clearSavedSession();
+        clearSavedSession(type);
         finishSession();
         return;
     }
@@ -211,32 +224,57 @@ function resumeSession() {
 function renderResumeCard() {
     const container = document.getElementById('resume-card-container');
     if (!container) return;
-    const s = userData.savedSession;
-    if (!s || !s.questionIds || s.questionIds.length === 0) {
+
+    const sessions = userData.savedSession;
+    const types = ['single', 'multiple', 'truefalse'];
+    const icons = { single: '📝', multiple: '📋', truefalse: '✅' };
+
+    // Collect all types that have saved sessions
+    const saved = types.filter(t => sessions && sessions[t] && sessions[t].questionIds && sessions[t].questionIds.length > 0);
+
+    if (saved.length === 0) {
         container.innerHTML = '';
         return;
     }
-    const total = s.questionIds.length;
-    const current = s.currentIndex + 1;
-    const typeLabel = TYPE_LABEL[s.questionType] || '题目';
-    const modeLabel = s.mode === 'random' ? '随机' : '顺序';
 
-    container.innerHTML = `
-        <div class="resume-card" id="resume-card">
-            <div class="resume-info">
-                <span class="resume-icon">📌</span>
-                <div>
-                    <div class="resume-title">继续上次训练</div>
-                    <div class="resume-detail">${typeLabel} · ${modeLabel} · 第 ${current}/${total} 题</div>
+    let html = '';
+    saved.forEach(type => {
+        const s = sessions[type];
+        const total = s.questionIds.length;
+        const current = s.currentIndex + 1;
+        const typeLabel = TYPE_LABEL[type] || type;
+        const modeLabel = s.mode === 'random' ? '随机' : '顺序';
+        const pct = Math.round((s.currentIndex / total) * 100);
+
+        html += `
+            <div class="resume-card" data-type="${type}">
+                <div class="resume-info">
+                    <span class="resume-icon">${icons[type] || '📌'}</span>
+                    <div>
+                        <div class="resume-title">继续上次${typeLabel}</div>
+                        <div class="resume-detail">${modeLabel} · 第 ${current}/${total} 题 · 进度 ${pct}%</div>
+                    </div>
                 </div>
+                <button class="btn btn-primary btn-resume" data-type="${type}">继续</button>
+                <button class="btn btn-resume-close" data-type="${type}">✕</button>
             </div>
-            <button class="btn btn-primary btn-resume" id="btn-resume">继续</button>
-            <button class="btn btn-resume-close" id="btn-resume-close">✕</button>
-        </div>
-    `;
+        `;
+    });
 
-    document.getElementById('btn-resume').addEventListener('click', resumeSession);
-    document.getElementById('btn-resume-close').addEventListener('click', clearSavedSession);
+    container.innerHTML = html;
+
+    // Attach event listeners
+    container.querySelectorAll('.btn-resume').forEach(btn => {
+        btn.addEventListener('click', function() {
+            resumeSession(this.dataset.type);
+        });
+    });
+    container.querySelectorAll('.btn-resume-close').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            clearSavedSession(this.dataset.type);
+        });
+    });
 }
 
 // ===========================================
@@ -320,8 +358,8 @@ function updateProgressBars() {
 // START EXERCISE
 // ===========================================
 function startExercise(type, mode, source) {
-    // Clear any previously saved session when starting fresh
-    clearSavedSession();
+    // Clear saved session for this type when starting fresh
+    clearSavedSession(type);
 
     appState.questionType = type;
     appState.mode = mode;
@@ -649,8 +687,8 @@ function nextQuestion() {
 }
 
 function finishSession() {
-    // Clear saved session since training is complete
-    clearSavedSession();
+    // Clear saved session for this type since training is complete
+    clearSavedSession(appState.questionType);
 
     // Add to history
     const total = appState.questions.length;

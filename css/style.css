@@ -214,8 +214,12 @@ body {
     border: 1.5px solid var(--primary);
     border-radius: var(--radius);
     padding: 14px 16px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     animation: fadeIn 0.3s ease;
+}
+
+#resume-card-container {
+    margin-bottom: 4px;
 }
 
 .resume-info {
