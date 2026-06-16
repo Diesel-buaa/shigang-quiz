@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>中国近现代史纲要 — 客观题练习系统</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- ========== 首页 ========== -->
+    <div id="screen-home" class="screen active">
+        <div class="home-header">
+            <h1 class="home-title">中国近现代史纲要</h1>
+            <p class="home-subtitle">客观题练习系统</p>
+        </div>
+
+        <div class="home-cards">
+            <!-- 单选题卡片 -->
+            <div class="type-card" data-type="single">
+                <div class="type-card-header">
+                    <span class="type-icon">📝</span>
+                    <div>
+                        <h3 class="type-name">单选题</h3>
+                        <p class="type-count" id="single-count">299 题</p>
+                    </div>
+                </div>
+                <div class="type-card-actions">
+                    <button class="btn btn-mode" data-type="single" data-mode="sequential">顺序答题</button>
+                    <button class="btn btn-mode btn-outline" data-type="single" data-mode="random">随机答题</button>
+                </div>
+            </div>
+
+            <!-- 多选题卡片 -->
+            <div class="type-card" data-type="multiple">
+                <div class="type-card-header">
+                    <span class="type-icon">📋</span>
+                    <div>
+                        <h3 class="type-name">多选题</h3>
+                        <p class="type-count" id="multiple-count">300 题</p>
+                    </div>
+                </div>
+                <div class="type-card-actions">
+                    <button class="btn btn-mode" data-type="multiple" data-mode="sequential">顺序答题</button>
+                    <button class="btn btn-mode btn-outline" data-type="multiple" data-mode="random">随机答题</button>
+                </div>
+            </div>
+
+            <!-- 判断题卡片 -->
+            <div class="type-card" data-type="truefalse">
+                <div class="type-card-header">
+                    <span class="type-icon">✅</span>
+                    <div>
+                        <h3 class="type-name">判断题</h3>
+                        <p class="type-count" id="truefalse-count">100 题</p>
+                    </div>
+                </div>
+                <div class="type-card-actions">
+                    <button class="btn btn-mode" data-type="truefalse" data-mode="sequential">顺序答题</button>
+                    <button class="btn btn-mode btn-outline" data-type="truefalse" data-mode="random">随机答题</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="home-bottom">
+            <div class="home-nav-row">
+                <button class="btn btn-nav" id="btn-favorites">
+                    <span class="nav-icon">⭐</span>
+                    <span>收藏夹</span>
+                    <span class="badge" id="fav-count-badge">0</span>
+                </button>
+                <button class="btn btn-nav" id="btn-wrong-book">
+                    <span class="nav-icon">❌</span>
+                    <span>错题库</span>
+                    <span class="badge" id="wrong-count-badge">0</span>
+                </button>
+            </div>
+            <div class="progress-section" id="progress-section">
+                <h4>📊 学习进度</h4>
+                <div class="progress-bars" id="progress-bars"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== 答题页 ========== -->
+    <div id="screen-exercise" class="screen">
+        <div class="exercise-topbar">
+            <button class="btn btn-back" id="btn-back">← 返回</button>
+            <span class="exercise-info" id="exercise-info"></span>
+            <button class="btn btn-fav" id="btn-fav-toggle">☆</button>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+
+        <div class="exercise-content">
+            <div class="question-number" id="question-number"></div>
+            <div class="question-text" id="question-text"></div>
+            <div class="question-hint" id="question-hint"></div>
+
+            <div class="options-list" id="options-list"></div>
+
+            <div class="answer-feedback" id="answer-feedback" style="display:none;">
+                <div class="feedback-text" id="feedback-text"></div>
+                <div class="correct-answer-display" id="correct-answer-display"></div>
+            </div>
+        </div>
+
+        <div class="exercise-bottom">
+            <button class="btn btn-submit" id="btn-submit">确认提交</button>
+            <button class="btn btn-next" id="btn-next" style="display:none;">下一题 →</button>
+        </div>
+    </div>
+
+    <!-- ========== 结果页 ========== -->
+    <div id="screen-results" class="screen">
+        <div class="results-container">
+            <h2>练习完成！</h2>
+            <div class="score-circle" id="score-circle">
+                <span class="score-number" id="score-number">0</span>
+                <span class="score-label">分</span>
+            </div>
+            <div class="results-stats">
+                <div class="stat-item">
+                    <span class="stat-label">总题数</span>
+                    <span class="stat-value" id="stat-total">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">正确</span>
+                    <span class="stat-value correct" id="stat-correct">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">错误</span>
+                    <span class="stat-value wrong" id="stat-wrong">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">正确率</span>
+                    <span class="stat-value" id="stat-rate">0%</span>
+                </div>
+            </div>
+            <p class="results-note">错题已自动加入错题库</p>
+            <div class="results-actions">
+                <button class="btn btn-primary" id="btn-view-wrong">查看错题</button>
+                <button class="btn btn-outline" id="btn-retry">再练一次</button>
+                <button class="btn btn-outline" id="btn-home">返回首页</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== 错题库页面 ========== -->
+    <div id="screen-wrong" class="screen">
+        <div class="sub-screen-header">
+            <button class="btn btn-back" id="btn-wrong-back">← 返回</button>
+            <h2>错题库</h2>
+        </div>
+        <div class="tab-bar">
+            <button class="tab active" data-subtype="single">单选题错题</button>
+            <button class="tab" data-subtype="multiple">多选题错题</button>
+            <button class="tab" data-subtype="truefalse">判断题错题</button>
+        </div>
+        <div class="sub-content" id="wrong-content">
+            <p class="empty-hint">暂无错题</p>
+        </div>
+        <div class="sub-actions" id="wrong-actions" style="display:none;">
+            <button class="btn btn-primary" id="btn-wrong-sequential">顺序练习</button>
+            <button class="btn btn-outline" id="btn-wrong-random">随机练习</button>
+            <button class="btn btn-danger" id="btn-clear-wrong">清空错题库</button>
+        </div>
+    </div>
+
+    <!-- ========== 收藏夹页面 ========== -->
+    <div id="screen-favorites" class="screen">
+        <div class="sub-screen-header">
+            <button class="btn btn-back" id="btn-fav-back">← 返回</button>
+            <h2>收藏夹</h2>
+        </div>
+        <div class="tab-bar">
+            <button class="tab active" data-subtype="single">单选题收藏</button>
+            <button class="tab" data-subtype="multiple">多选题收藏</button>
+            <button class="tab" data-subtype="truefalse">判断题收藏</button>
+        </div>
+        <div class="sub-content" id="fav-content">
+            <p class="empty-hint">暂无收藏</p>
+        </div>
+        <div class="sub-actions" id="fav-actions" style="display:none;">
+            <button class="btn btn-primary" id="btn-fav-sequential">顺序练习</button>
+            <button class="btn btn-outline" id="btn-fav-random">随机练习</button>
+        </div>
+    </div>
+
+    <!-- 题库数据 -->
+    <script src="data/questions.js"></script>
+    <!-- 应用逻辑 -->
+    <script src="js/app.js"></script>
+</body>
+</html>
