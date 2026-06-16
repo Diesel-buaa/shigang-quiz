@@ -130,12 +130,17 @@ function showScreen(name) {
 // ===========================================
 function saveSession() {
     if (!appState.questions.length || appState.userAnswers.length === 0) return;
+    // If user already submitted current question, advance to next
+    let idx = appState.currentIndex;
+    if (appState.sessionDone) idx++;
+    if (idx >= appState.questions.length) return; // Session complete, no need to save
+
     userData.savedSession = {
         questionType: appState.questionType,
         mode: appState.mode,
         source: appState.source,
         questionIds: appState.questions.map(q => q.id),
-        currentIndex: appState.currentIndex,
+        currentIndex: idx,
         userAnswers: appState.userAnswers,
         score: appState.score,
         savedAt: new Date().toISOString()
@@ -151,7 +156,7 @@ function clearSavedSession() {
 
 function resumeSession() {
     const s = userData.savedSession;
-    if (!s || !s.questionIds.length) return;
+    if (!s || !s.questionIds || !s.questionIds.length) return;
 
     // Rebuild questions array from IDs
     const allQuestions = getQuestionsByType(s.questionType);
@@ -161,6 +166,19 @@ function resumeSession() {
     const questions = s.questionIds.map(id => questionMap[id]).filter(Boolean);
     if (questions.length === 0) {
         clearSavedSession();
+        return;
+    }
+
+    // If session was already complete, go to results
+    if (s.currentIndex >= questions.length) {
+        appState.questionType = s.questionType;
+        appState.mode = s.mode;
+        appState.source = s.source;
+        appState.questions = questions;
+        appState.userAnswers = s.userAnswers;
+        appState.score = s.score;
+        clearSavedSession();
+        finishSession();
         return;
     }
 
@@ -912,10 +930,9 @@ function initExerciseButtons() {
     // Back button during exercise
     document.getElementById('btn-back').addEventListener('click', () => {
         const answered = appState.userAnswers.length;
-        if (answered > 0 && !appState.sessionDone) {
+        if (answered > 0) {
             if (confirm(`你已经回答了 ${answered} 道题，确定要退出吗？\n进度已保存，下次可以继续。`)) {
                 saveSession();
-                saveAll();
                 showScreen('home');
                 updateBadges();
                 updateProgressBars();
