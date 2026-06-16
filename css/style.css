@@ -559,6 +559,30 @@ body {
     opacity: 0.85;
 }
 
+/* Knowledge link in feedback */
+.knowledge-link {
+    display: block;
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: rgba(37, 99, 235, 0.08);
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    border-radius: var(--radius-xs);
+    font-size: 0.88rem;
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all var(--transition);
+}
+
+.knowledge-link:hover {
+    background: rgba(37, 99, 235, 0.15);
+    border-color: var(--primary);
+}
+
+.knowledge-link span {
+    text-decoration: underline;
+}
+
 .exercise-bottom {
     padding: 16px 0 8px;
 }

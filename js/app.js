@@ -480,6 +480,28 @@ function showFeedback(isCorrect, question, userAnswer) {
                 `正确答案：${correctLabels}`;
         }
     }
+
+    // Add knowledge point link
+    addKnowledgeLink(fb, question);
+}
+
+function addKnowledgeLink(fb, question) {
+    // Remove existing link if any
+    const existing = fb.querySelector('.knowledge-link');
+    if (existing) existing.remove();
+
+    const period = window.PERIOD_MAP && window.PERIOD_MAP[question.id];
+    if (!period) return;
+
+    const label = window.PERIOD_LABELS && window.PERIOD_LABELS[period];
+    if (!label) return;
+
+    const link = document.createElement('a');
+    link.className = 'knowledge-link';
+    link.href = `docs/study-guide.html#p${period}`;
+    link.target = '_blank';
+    link.innerHTML = `📖 相关知识点：<span>${label}</span> →`;
+    fb.appendChild(link);
 }
 
 // ===========================================
