@@ -130,10 +130,10 @@ function showScreen(name) {
 // ===========================================
 function saveSession() {
     if (!appState.questions.length || appState.userAnswers.length === 0) return;
-    // If user already submitted current question, advance to next
-    let idx = appState.currentIndex;
-    if (appState.sessionDone) idx++;
-    if (idx >= appState.questions.length) return; // Session complete, no need to save
+    // Always use number of answers as the next index to resume from
+    // This ensures we never re-answer a question that was already submitted
+    const idx = appState.userAnswers.length;
+    if (idx >= appState.questions.length) return; // All questions answered
 
     userData.savedSession = {
         questionType: appState.questionType,
@@ -518,6 +518,9 @@ function submitAnswer() {
 
     saveAll();
 
+    // Auto-save session after every answer (so progress survives refresh/close)
+    saveSession();
+
     // Update UI
     document.getElementById('btn-submit').style.display = 'none';
     document.getElementById('btn-next').style.display = '';
@@ -618,6 +621,9 @@ function addKnowledgeLink(fb, question) {
 function nextQuestion() {
     appState.currentIndex++;
     appState.sessionDone = false;
+
+    // Auto-save after advancing to next question
+    saveSession();
 
     if (appState.currentIndex >= appState.questions.length) {
         finishSession();
